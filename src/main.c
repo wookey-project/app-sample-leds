@@ -104,7 +104,7 @@ int _main(uint32_t my_id)
             return 1;
         }
 
-        // printf ("BUTTON sent message: %x\n", msg);
+        printf ("BUTTON sent message: %x\n", msg);
 
         switch (msg) {
             case 0: display_leds = OFF; break;
