@@ -3,6 +3,16 @@
 This application is coupled with the ['button' application](../button/README.md) as they work together using IPC channels
 (InterProcess Communication).
 
+These applications are configured with the C version of EwoK with:
+```
+  $ make boards/32f407disco/configs/disco_blinky_ipc_defconfig
+```
+
+These applications are configured with the Ada/Spark version of EwoK with:
+```
+  $ make boards/32f407disco/configs/disco_blinky_ipc_ada_defconfig
+```
+
 ## Purpose of the example
 
 This is a very basic sample application on top of the EwoK microkernel for the STM32 Discovery F407.
@@ -128,14 +138,14 @@ In the nominal phase, the leds task first checks for an IPC coming from the butt
 ```
 
 Beware of the `IPC_RECV_ASYNC`, meaning that we ask for an IPC reception in **asynchronous mode**.
-This is important since we do not want the syscall to be blocking: other work must be done periodically 
-by the leds task, so we want to move on to the rest of the `while(1)` loop in any case.
+This is important since we do not want the syscall to be blocking: some other work must be done periodically in order
+to make the leds blinking.
 
 Since the IPC reception is asynchronous, three cases can occur and can be discriminated using the return
 value of the syscall:
-  * `SYS_E_DONE`: this means that there is a waiting IPC from the button application
-  * `SYS_E_BUSY`: this means that there is no waiting IPC from the button application
-  * `SYS_E_DENIED` or `SYS_E_INVAL`: these are syscall errors and should not occur in a nominal behavior
+  * `SYS_E_DONE`: there is an awaiting message sent by the button application
+  * `SYS_E_BUSY`: there is no awaiting message
+  * `SYS_E_DENIED` or `SYS_E_INVAL`: these are syscall errors and should not occur in a nominal behavior. Possible causes are missing permissions or improper parameters (ie. invalid task id)
 
 In order to catch these cases, we use a `switch case`. When a button push event is caught through IPC, we 
 change the internal state of the LEDs, making the other LEDs couple blink:
