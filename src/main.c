@@ -2,8 +2,8 @@
 #include "api/types.h"
 #include "api/print.h"
 
-enum led_state_t {OFF, ON};
-enum led_state_t display_leds = ON;
+typedef enum {OFF, ON} led_state_t;
+led_state_t display_leds = ON;
 
 device_t    leds;
 int         desc_leds;
@@ -11,7 +11,6 @@ int         desc_leds;
 int _main(uint32_t my_id)
 {
     uint8_t         id, id_button;
-    char            msg;
     logsize_t       msg_size;
     e_syscall_ret   ret;
 
@@ -97,21 +96,14 @@ int _main(uint32_t my_id)
 
     while (1) {
         id = id_button;
-        msg_size = 1;
-        ret = sys_ipc(IPC_RECV_SYNC, &id, &msg_size, &msg);
+        msg_size = sizeof (display_leds);
+        ret = sys_ipc(IPC_RECV_SYNC, &id, &msg_size, (char*) &display_leds);
         if (ret != SYS_E_DONE) {
             printf ("sys_ipc(): error. Exiting.\n");
             return 1;
         }
 
-        printf ("BUTTON sent message: %x\n", msg);
-
-        switch (msg) {
-            case 0: display_leds = OFF; break;
-            case 1: display_leds = ON; break;
-            default:
-                break; /* Invalid value - do nothing */
-        }
+        printf ("BUTTON sent message: %x\n", display_leds);
 
         if (display_leds == ON) {
             ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[0].kref.val, 1);
