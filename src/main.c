@@ -18,21 +18,22 @@ int _main(uint32_t my_id)
 
     ret = sys_init(INIT_GETTASKID, "button", &id_button);
     if (ret != SYS_E_DONE) {
-        printf ("Task BUTTON not present. Exiting.\n");
+        printf("Task BUTTON not present. Exiting.\n");
         return 1;
     }
 
-    /* Zeroing the structure to avoid improper values detected
-     * by the kernel */
-    memset (&leds, 0, sizeof (leds));
+    /* Zeroing the structure to avoid improper values detected by the kernel */
+    memset(&leds, 0, sizeof(leds));
 
-    strncpy (leds.name, "LEDs", sizeof (leds.name));
+    strncpy(leds.name, "LEDs", sizeof(leds.name));
 
-    /* Configuring the GPIOs. Note: the related clocks are automatically set
+    /*
+     * Configuring the GPIOs. Note: the related clocks are automatically set
      * by the kernel
      */
 
-    leds.gpio_num = 4; /* Number of configured GPIO */
+    /* Number of configured GPIO */
+    leds.gpio_num = 4;
 
     leds.gpios[0].kref.port = GPIO_PD;
     leds.gpios[0].kref.pin = 12;
@@ -73,9 +74,9 @@ int _main(uint32_t my_id)
     ret = sys_init(INIT_DEVACCESS, &leds, &desc_leds);
 
     if (ret) {
-        printf ("error: sys_init() %s\n", strerror(ret));
+        printf("error: sys_init() %s\n", strerror(ret));
     } else {
-        printf ("sys_init() - success\n");
+        printf("sys_init() - success\n");
     }
 
     /*
@@ -84,11 +85,11 @@ int _main(uint32_t my_id)
 
     ret = sys_init(INIT_DONE);
     if (ret) {
-        printf ("error INIT_DONE: %s\n", strerror(ret));
+        printf("error INIT_DONE: %s\n", strerror(ret));
         return 1;
     }
 
-    printf ("init done.\n");
+    printf("init done.\n");
 
     /*
      * Main task
@@ -96,63 +97,63 @@ int _main(uint32_t my_id)
 
     while (1) {
         id = id_button;
-        msg_size = sizeof (display_leds);
+        msg_size = sizeof(display_leds);
         ret = sys_ipc(IPC_RECV_SYNC, &id, &msg_size, (char*) &display_leds);
         if (ret != SYS_E_DONE) {
-            printf ("sys_ipc(): error. Exiting.\n");
+            printf("sys_ipc(): error. Exiting.\n");
             return 1;
         }
 
-        printf ("BUTTON sent message: %x\n", display_leds);
+        printf("BUTTON sent message: %x\n", display_leds);
 
         if (display_leds == ON) {
             ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[0].kref.val, 1);
             if (ret != SYS_E_DONE) {
-                printf ("sys_cfg(): failed\n");
+                printf("sys_cfg(): failed\n");
                 return 1;
             }
 
             ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[1].kref.val, 1);
             if (ret != SYS_E_DONE) {
-                printf ("sys_cfg(): failed\n");
+                printf("sys_cfg(): failed\n");
                 return 1;
             }
 
             ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[2].kref.val, 1);
             if (ret != SYS_E_DONE) {
-                printf ("sys_cfg(): failed\n");
+                printf("sys_cfg(): failed\n");
                 return 1;
             }
 
             ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[3].kref.val, 1);
             if (ret != SYS_E_DONE) {
-                printf ("sys_cfg(): failed\n");
+                printf("sys_cfg(): failed\n");
                 return 1;
             }
         } else {
             ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[0].kref.val, 0);
             if (ret != SYS_E_DONE) {
-                printf ("sys_cfg(): failed\n");
+                printf("sys_cfg(): failed\n");
                 return 1;
             }
             ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[1].kref.val, 0);
             if (ret != SYS_E_DONE) {
-                printf ("sys_cfg(): failed\n");
+                printf("sys_cfg(): failed\n");
                 return 1;
             }
             ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[2].kref.val, 0);
             if (ret != SYS_E_DONE) {
-                printf ("sys_cfg(): failed\n");
+                printf("sys_cfg(): failed\n");
                 return 1;
             }
             ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[3].kref.val, 0);
             if (ret != SYS_E_DONE) {
-                printf ("sys_cfg(): failed\n");
+                printf("sys_cfg(): failed\n");
                 return 1;
             }
         }
 
-        sys_sleep (500, SLEEP_MODE_INTERRUPTIBLE);
+        sys_sleep(500, SLEEP_MODE_INTERRUPTIBLE);
     }
 
     return 0;
