@@ -2,7 +2,7 @@
 #include "api/types.h"
 #include "api/print.h"
 
-typedef enum {OFF, ON} led_state_t;
+typedef enum {OFF = 0, ON = 1} led_state_t;
 
 /* Leds state */
 led_state_t green_state  = ON;
@@ -25,6 +25,7 @@ int _main(uint32_t my_id)
 
     printf("Hello, I'm LEDs task. My id is %x\n", my_id);
 
+    /* Get the button task id to be able to communicate with it using IPCs */
     ret = sys_init(INIT_GETTASKID, "button", &id_button);
     if (ret != SYS_E_DONE) {
         printf("Task BUTTON not present. Exiting.\n");
@@ -37,10 +38,16 @@ int _main(uint32_t my_id)
     strncpy(leds.name, "LEDs", sizeof(leds.name));
 
     /*
-     * Configuring the GPIOs. Note: the related clocks are automatically set
-     * by the kernel
+     * Configuring the LED GPIOs. Note: the related clocks are automatically set
+     * by the kernel.
+     * We configure 4 GPIOs here corresponding to the STM32 Discovery F407 LEDs (LD4, LD3, LD5, LD6):
+     *     - PD12, PD13, PD14 and PD15 are in output mode
+     * See the datasheet of the board here for more information:
+     * https://www.st.com/content/ccc/resource/technical/document/user_manual/70/fe/4a/3f/e7/e1/4f/7d/DM00039084.pdf/files/DM00039084.pdf/jcr:content/translations/en.DM00039084.pdf
+     *
+     * NOTE: since we do not need an ISR handler for the LED gpios, we do not configure it (we only need to
+     * synchronously set the LEDs)
      */
-
     /* Number of configured GPIO */
     leds.gpio_num = 4;
 
