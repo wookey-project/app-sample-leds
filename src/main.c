@@ -3,8 +3,17 @@
 #include "api/print.h"
 
 typedef enum {OFF, ON} led_state_t;
+
+/* Leds state */
+led_state_t green_state  = ON;
+led_state_t orange_state = OFF;
+led_state_t red_state    = ON;
+led_state_t blue_state   = OFF;
+
+/* Blink state */
 led_state_t display_leds = ON;
 
+bool        button_pressed = false;
 device_t    leds;
 int         desc_leds;
 
@@ -97,35 +106,55 @@ int _main(uint32_t my_id)
 
     while (1) {
         id = id_button;
-        msg_size = sizeof(display_leds);
-        ret = sys_ipc(IPC_RECV_SYNC, &id, &msg_size, (char*) &display_leds);
-        if (ret != SYS_E_DONE) {
-            printf("sys_ipc(): error. Exiting.\n");
-            return 1;
+        msg_size = sizeof(button_pressed);
+
+        ret = sys_ipc(IPC_RECV_ASYNC, &id, &msg_size, (char*) &button_pressed);
+
+        switch (ret) {
+            case SYS_E_DONE:
+                printf("BUTTON sent message: %x\n", button_pressed);
+
+                if (button_pressed == true) {
+                    /* Change leds state */
+                    green_state   = (green_state == ON) ? OFF : ON;
+                    orange_state  = (orange_state == ON) ? OFF : ON;
+                    red_state     = (red_state == ON) ? OFF : ON;
+                    blue_state    = (blue_state == ON) ? OFF : ON;
+
+                    /* Show leds */
+                    display_leds  = ON;
+                }
+
+                break;
+            case SYS_E_BUSY:
+                break;
+            case SYS_E_DENIED:
+            case SYS_E_INVAL:
+            default:
+                printf("sys_ipc(): error. Exiting.\n");
+                return 1;
         }
 
-        printf("BUTTON sent message: %x\n", display_leds);
-
         if (display_leds == ON) {
-            ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[0].kref.val, 1);
+            ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[0].kref.val, green_state);
             if (ret != SYS_E_DONE) {
                 printf("sys_cfg(): failed\n");
                 return 1;
             }
 
-            ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[1].kref.val, 1);
+            ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[1].kref.val, orange_state);
             if (ret != SYS_E_DONE) {
                 printf("sys_cfg(): failed\n");
                 return 1;
             }
 
-            ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[2].kref.val, 1);
+            ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[2].kref.val, red_state);
             if (ret != SYS_E_DONE) {
                 printf("sys_cfg(): failed\n");
                 return 1;
             }
 
-            ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[3].kref.val, 1);
+            ret = sys_cfg(CFG_GPIO_SET, (uint8_t) leds.gpios[3].kref.val, blue_state);
             if (ret != SYS_E_DONE) {
                 printf("sys_cfg(): failed\n");
                 return 1;
@@ -153,6 +182,10 @@ int _main(uint32_t my_id)
             }
         }
 
+        /* Make the leds blink */
+        display_leds = (display_leds == ON) ? OFF : ON;
+
+        /* Sleeping for 500 ms */
         sys_sleep(500, SLEEP_MODE_INTERRUPTIBLE);
     }
 
